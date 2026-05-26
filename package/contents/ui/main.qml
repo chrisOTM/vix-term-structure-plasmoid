@@ -153,7 +153,7 @@ PlasmoidItem {
                         font.bold: true
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         color: Kirigami.Theme.disabledTextColor
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 4
                     }
                     PlasmaComponents3.Label {
                         text: i18n("Value")
@@ -167,8 +167,22 @@ PlasmoidItem {
                         font.bold: true
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         color: Kirigami.Theme.disabledTextColor
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                         visible: plasmoid.configuration.showPercentiles
+                    }
+                    PlasmaComponents3.Label {
+                        text: i18n("Min")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                    }
+                    PlasmaComponents3.Label {
+                        text: i18n("Max")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                     }
                 }
 
@@ -185,7 +199,7 @@ PlasmoidItem {
                             text: modelData.label + ":"
                             color: Kirigami.Theme.disabledTextColor
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 4
                         }
                         PlasmaComponents3.Label {
                             text: modelData.value.toFixed(2)
@@ -199,7 +213,7 @@ PlasmoidItem {
                                 return Math.round(modelData.percentile) + "%"
                             }
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                             visible: plasmoid.configuration.showPercentiles
                             color: {
                                 if (modelData.percentile === undefined || modelData.percentile === null)
@@ -211,6 +225,26 @@ PlasmoidItem {
                                     return Kirigami.Theme.neutralTextColor
                                 return Kirigami.Theme.textColor
                             }
+                        }
+                        PlasmaComponents3.Label {
+                            text: {
+                                if (modelData.min_1y === undefined || modelData.min_1y === null)
+                                    return "—"
+                                return modelData.min_1y.toFixed(2)
+                            }
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                            color: Kirigami.Theme.disabledTextColor
+                        }
+                        PlasmaComponents3.Label {
+                            text: {
+                                if (modelData.max_1y === undefined || modelData.max_1y === null)
+                                    return "—"
+                                return modelData.max_1y.toFixed(2)
+                            }
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                            color: Kirigami.Theme.disabledTextColor
                         }
                     }
                 }
