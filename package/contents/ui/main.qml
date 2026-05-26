@@ -107,6 +107,14 @@ PlasmoidItem {
                     }
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }
+
+                PlasmaComponents3.ToolButton {
+                    icon.name: "view-refresh"
+                    enabled: !root.isRefreshing
+                    onClicked: root.fetchData()
+                    ToolTip.visible: hovered
+                    ToolTip.text: i18n("Refresh data")
+                }
             }
 
             // Error message
@@ -128,27 +136,25 @@ PlasmoidItem {
                 showValues: plasmoid.configuration.showValuesOnChart
             }
 
-            // Table (optional)
-            GridLayout {
-                id: tableGrid
+            // Table (optional) — horizontal row
+            RowLayout {
+                id: tableRow
                 Layout.fillWidth: true
                 visible: plasmoid.configuration.showTable && root.lastSuccessfulPoints.length > 0
-                columns: 2
-                columnSpacing: Kirigami.Units.gridUnit
-                rowSpacing: Kirigami.Units.smallSpacing / 2
+                spacing: Kirigami.Units.smallSpacing
 
                 Repeater {
                     model: root.lastSuccessfulPoints
 
                     delegate: RowLayout {
                         required property var modelData
-                        Layout.columnSpan: 1
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.smallSpacing / 2
 
                         PlasmaComponents3.Label {
-                            text: modelData.label
+                            text: modelData.label + ":"
                             color: Kirigami.Theme.disabledTextColor
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            Layout.minimumWidth: Kirigami.Units.gridUnit * 2.5
                         }
                         PlasmaComponents3.Label {
                             text: modelData.value.toFixed(2)
