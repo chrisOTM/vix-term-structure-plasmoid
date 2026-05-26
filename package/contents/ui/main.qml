@@ -168,7 +168,7 @@ PlasmoidItem {
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         color: Kirigami.Theme.disabledTextColor
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                        visible: plasmoid.configuration.showPercentiles
+                        visible: plasmoid.configuration.showPercentiles !== false
                     }
                     PlasmaComponents3.Label {
                         text: i18n("Min")
@@ -214,7 +214,7 @@ PlasmoidItem {
                             }
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                            visible: plasmoid.configuration.showPercentiles
+                            visible: plasmoid.configuration.showPercentiles !== false
                             color: {
                                 if (modelData.percentile === undefined || modelData.percentile === null)
                                     return Kirigami.Theme.disabledTextColor
