@@ -74,7 +74,7 @@ def compute_percentile(close: "pd.Series", current_value: float) -> float:
 
 
 def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) -> tuple:
-    """Returns (value, percentile) for the given ticker."""
+    """Returns (value, percentile, min_1y, max_1y) for the given ticker."""
     data = yf.download(
         tickers=ticker,
         period=period,
@@ -94,8 +94,10 @@ def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) 
         raise ValueError("Invalid non-positive value")
 
     percentile = compute_percentile(close, value)
+    min_1y = round(float(close.min()), 2)
+    max_1y = round(float(close.max()), 2)
 
-    return round(value, 2), percentile
+    return round(value, 2), percentile, min_1y, max_1y
 
 
 def classify_curve(points: list) -> str:
@@ -141,13 +143,13 @@ def main() -> int:
     try:
         for item in TICKERS:
             try:
-                value, percentile = fetch_latest_value(
+                value, percentile, min_1y, max_1y = fetch_latest_value(
                     ticker=item["ticker"],
                     period=args.period,
                     interval=args.interval,
                     timeout=args.timeout,
                 )
-                points.append({**item, "value": value, "percentile": percentile})
+                points.append({**item, "value": value, "percentile": percentile, "min_1y": min_1y, "max_1y": max_1y})
             except Exception as exc:
                 print(f"{item['ticker']}: {exc}", file=sys.stderr)
                 errors.append({"ticker": item["ticker"], "message": str(exc)})
