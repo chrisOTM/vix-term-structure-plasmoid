@@ -123,4 +123,4 @@ A future version (v0.2+) should replace this with a local D-Bus helper or native
 
 ## License
 
-GPL-2.0-or-later
+MIT
