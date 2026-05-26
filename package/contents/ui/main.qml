@@ -136,16 +136,16 @@ PlasmoidItem {
                 showValues: plasmoid.configuration.showValuesOnChart
             }
 
-            // Table (optional) — horizontal row
+            // Table (optional) — centered below chart
             ColumnLayout {
                 id: tableSection
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
                 visible: plasmoid.configuration.showTable && root.lastSuccessfulPoints.length > 0
                 spacing: Kirigami.Units.smallSpacing / 2
 
                 // Header
                 RowLayout {
-                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
                     spacing: Kirigami.Units.smallSpacing
 
                     PlasmaComponents3.Label {
@@ -192,7 +192,7 @@ PlasmoidItem {
 
                     delegate: RowLayout {
                         required property var modelData
-                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
                         spacing: Kirigami.Units.smallSpacing
 
                         PlasmaComponents3.Label {
