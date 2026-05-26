@@ -22,7 +22,7 @@ Canvas {
         }
 
         var pad = Kirigami.Units.gridUnit
-        var padLeft = pad * 2.5
+        var padLeft = pad * 4
         var padRight = pad
         var padTop = pad
         var padBottom = pad * 1.8
