@@ -12,7 +12,7 @@
       }
     ],
     "Category": "Online Services",
-    "License": "GPL-2.0-or-later",
+    "License": "MIT",
     "Website": "https://chrisonthemove.de",
     "BugReportUrl": "https://github.com/chrisOTM/vix-term-structure-plasmoid/issues"
   },
