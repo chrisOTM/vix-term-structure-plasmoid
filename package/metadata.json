@@ -1,0 +1,21 @@
+{
+  "KPlugin": {
+    "Id": "com.chrisotm.vixtermstructure",
+    "Name": "VIX Term Structure",
+    "Description": "Shows the VIX cash term structure using Yahoo Finance data via yfinance.",
+    "Version": "0.1.0",
+    "Icon": "office-chart-line",
+    "Authors": [
+      {
+        "Name": "ChrisOTM",
+        "Email": "chrisotm@pm.me"
+      }
+    ],
+    "Category": "Online Services",
+    "License": "GPL-2.0-or-later",
+    "Website": "https://chrisonthemove.de",
+    "BugReportUrl": "https://github.com/chrisOTM/vix-term-structure-plasmoid/issues"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}
