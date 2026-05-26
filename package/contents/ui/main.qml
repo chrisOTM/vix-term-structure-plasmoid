@@ -137,28 +137,80 @@ PlasmoidItem {
             }
 
             // Table (optional) — horizontal row
-            RowLayout {
-                id: tableRow
+            ColumnLayout {
+                id: tableSection
                 Layout.fillWidth: true
                 visible: plasmoid.configuration.showTable && root.lastSuccessfulPoints.length > 0
-                spacing: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.smallSpacing / 2
 
+                // Header
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.smallSpacing
+
+                    PlasmaComponents3.Label {
+                        text: i18n("Label")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                    }
+                    PlasmaComponents3.Label {
+                        text: i18n("Value")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                    }
+                    PlasmaComponents3.Label {
+                        text: i18n("Pctl")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                        visible: plasmoid.configuration.showPercentiles
+                    }
+                }
+
+                // Data rows
                 Repeater {
                     model: root.lastSuccessfulPoints
 
                     delegate: RowLayout {
                         required property var modelData
                         Layout.fillWidth: true
-                        spacing: Kirigami.Units.smallSpacing / 2
+                        spacing: Kirigami.Units.smallSpacing
 
                         PlasmaComponents3.Label {
                             text: modelData.label + ":"
                             color: Kirigami.Theme.disabledTextColor
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 2
                         }
                         PlasmaComponents3.Label {
                             text: modelData.value.toFixed(2)
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                        }
+                        PlasmaComponents3.Label {
+                            text: {
+                                if (modelData.percentile === undefined || modelData.percentile === null)
+                                    return "—"
+                                return Math.round(modelData.percentile) + "%"
+                            }
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                            visible: plasmoid.configuration.showPercentiles
+                            color: {
+                                if (modelData.percentile === undefined || modelData.percentile === null)
+                                    return Kirigami.Theme.disabledTextColor
+                                var pctl = modelData.percentile
+                                if (pctl <= 10 || pctl >= 90)
+                                    return Kirigami.Theme.negativeTextColor
+                                if (pctl <= 25 || pctl >= 75)
+                                    return Kirigami.Theme.neutralTextColor
+                                return Kirigami.Theme.textColor
+                            }
                         }
                     }
                 }
