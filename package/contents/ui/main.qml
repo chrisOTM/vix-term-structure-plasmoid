@@ -112,8 +112,8 @@ PlasmoidItem {
                     icon.name: "view-refresh"
                     enabled: !root.isRefreshing
                     onClicked: root.fetchData()
-                    ToolTip.visible: hovered
-                    ToolTip.text: i18n("Refresh data")
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: i18n("Refresh data")
                 }
             }
 
