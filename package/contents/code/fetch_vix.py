@@ -64,9 +64,19 @@ def close_series(data: "pd.DataFrame", ticker: str) -> "pd.Series":
     return close
 
 
-def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) -> float:
+def compute_percentile(close: "pd.Series", current_value: float) -> float:
+    """Percentile Rank (0–100): Anteil der Tage mit Close ≤ current_value."""
+    count = int((close <= current_value).sum())
+    total = int(close.count())
+    if total == 0:
+        raise ValueError("Empty series for percentile computation")
+    return round(count / total * 100, 1)
+
+
+def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) -> tuple:
+    """Returns (value, percentile) for the given ticker."""
     data = yf.download(
-        ticker,
+        tickers=ticker,
         period=period,
         interval=interval,
         progress=False,
@@ -83,7 +93,9 @@ def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) 
     if value <= 0:
         raise ValueError("Invalid non-positive value")
 
-    return round(value, 2)
+    percentile = compute_percentile(close, value)
+
+    return round(value, 2), percentile
 
 
 def classify_curve(points: list) -> str:
@@ -115,7 +127,7 @@ def build_result(status: str, points: list, errors: list) -> dict:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch VIX cash term structure data.")
-    parser.add_argument("--period",   default="5d")
+    parser.add_argument("--period",   default="1y")
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--timeout",  type=float, default=10)
     return parser.parse_args()
@@ -129,13 +141,13 @@ def main() -> int:
     try:
         for item in TICKERS:
             try:
-                value = fetch_latest_value(
+                value, percentile = fetch_latest_value(
                     ticker=item["ticker"],
                     period=args.period,
                     interval=args.interval,
                     timeout=args.timeout,
                 )
-                points.append({**item, "value": value})
+                points.append({**item, "value": value, "percentile": percentile})
             except Exception as exc:
                 print(f"{item['ticker']}: {exc}", file=sys.stderr)
                 errors.append({"ticker": item["ticker"], "message": str(exc)})

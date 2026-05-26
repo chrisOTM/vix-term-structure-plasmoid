@@ -92,13 +92,34 @@ Canvas {
         var fontSize = Math.max(Kirigami.Units.gridUnit * 0.75, 9)
         ctx.font = fontSize + "px sans-serif"
 
+        function percentileColor(pctl) {
+            if (pctl === undefined || pctl === null) return Kirigami.Theme.highlightColor
+            if (pctl <= 10 || pctl >= 90) return Kirigami.Theme.negativeTextColor
+            if (pctl <= 25 || pctl >= 75) return Kirigami.Theme.neutralTextColor
+            return Kirigami.Theme.highlightColor
+        }
+
         for (var j = 0; j < points.length; j++) {
             var px = xAt(j)
             var py = yAt(points[j].value)
+            var dotColor = percentileColor(points[j].percentile)
+
+            // Glow ring for extreme percentile values
+            if (points[j].percentile !== undefined && points[j].percentile !== null) {
+                var pctl = points[j].percentile
+                if (pctl <= 10 || pctl >= 90) {
+                    ctx.beginPath()
+                    ctx.arc(px, py, dotR * 2.2, 0, Math.PI * 2)
+                    ctx.fillStyle = dotColor
+                    ctx.globalAlpha = 0.2
+                    ctx.fill()
+                    ctx.globalAlpha = 1.0
+                }
+            }
 
             ctx.beginPath()
             ctx.arc(px, py, dotR, 0, Math.PI * 2)
-            ctx.fillStyle = Kirigami.Theme.highlightColor
+            ctx.fillStyle = dotColor
             ctx.fill()
             ctx.strokeStyle = Kirigami.Theme.backgroundColor
             ctx.lineWidth = 1.5

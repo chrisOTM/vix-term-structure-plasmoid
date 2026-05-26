@@ -9,6 +9,7 @@ Kirigami.FormLayout {
     property alias cfg_refreshIntervalMinutes: refreshInterval.value
     property alias cfg_showValuesOnChart: showValues.checked
     property alias cfg_showTable: showTable.checked
+    property alias cfg_showPercentiles: showPercentiles.checked
 
     QQC2.SpinBox {
         id: refreshInterval
@@ -26,5 +27,11 @@ Kirigami.FormLayout {
     QQC2.CheckBox {
         id: showTable
         text: i18n("Show table")
+    }
+
+    QQC2.CheckBox {
+        id: showPercentiles
+        text: i18n("Show percentile ranks")
+        checked: true
     }
 }
