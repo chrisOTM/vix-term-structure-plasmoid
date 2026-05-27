@@ -208,6 +208,8 @@ PlasmoidItem {
                         }
                         PlasmaComponents3.Label {
                             text: {
+                                if (modelData.label === "1Y")
+                                    return "n/a"
                                 if (modelData.percentile === undefined || modelData.percentile === null)
                                     return "—"
                                 return Math.round(modelData.percentile) + "%"
@@ -216,6 +218,8 @@ PlasmoidItem {
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                             visible: plasmoid.configuration.showPercentiles !== false
                             color: {
+                                if (modelData.label === "1Y")
+                                    return Kirigami.Theme.textColor
                                 if (modelData.percentile === undefined || modelData.percentile === null)
                                     return Kirigami.Theme.disabledTextColor
                                 var pctl = modelData.percentile
@@ -228,6 +232,8 @@ PlasmoidItem {
                         }
                         PlasmaComponents3.Label {
                             text: {
+                                if (modelData.label === "1Y")
+                                    return modelData.value.toFixed(2)
                                 if (modelData.min_1y === undefined || modelData.min_1y === null)
                                     return "—"
                                 return modelData.min_1y.toFixed(2)
@@ -238,6 +244,8 @@ PlasmoidItem {
                         }
                         PlasmaComponents3.Label {
                             text: {
+                                if (modelData.label === "1Y")
+                                    return modelData.value.toFixed(2)
                                 if (modelData.max_1y === undefined || modelData.max_1y === null)
                                     return "—"
                                 return modelData.max_1y.toFixed(2)
