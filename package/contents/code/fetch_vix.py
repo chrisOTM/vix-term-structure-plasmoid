@@ -149,6 +149,10 @@ def main() -> int:
                     interval=args.interval,
                     timeout=args.timeout,
                 )
+                if item["label"] == "1Y":
+                    percentile = None
+                    min_1y = None
+                    max_1y = None
                 points.append({**item, "value": value, "percentile": percentile, "min_1y": min_1y, "max_1y": max_1y})
             except Exception as exc:
                 print(f"{item['ticker']}: {exc}", file=sys.stderr)
