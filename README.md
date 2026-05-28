@@ -16,7 +16,8 @@ The widget fetches and displays the latest values for five VIX futures maturitie
 
 It plots a line chart of the term structure and classifies the curve as Contango, Backwardation, Flat, or Unknown based on a simple heuristic (see below). This is a visual tool only — **not a trading signal**.
 
-<img width="599" height="349" alt="image" src="https://github.com/user-attachments/assets/ca183a2a-f029-4e3d-8828-9889633bde2e" />
+<img width="620" height="641" alt="image" src="https://github.com/user-attachments/assets/9ad6a00d-3138-4c3b-947b-013654935f5b" />
+
 
 ## Requirements
 
