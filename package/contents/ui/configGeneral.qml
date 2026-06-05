@@ -10,6 +10,8 @@ Kirigami.FormLayout {
     property alias cfg_showValuesOnChart: showValues.checked
     property alias cfg_showTable: showTable.checked
     property alias cfg_showPercentiles: showPercentiles.checked
+    property alias cfg_marginWarnThreshold: marginWarn.value
+    property alias cfg_marginCriticalThreshold: marginCritical.value
 
     QQC2.SpinBox {
         id: refreshInterval
@@ -33,5 +35,27 @@ Kirigami.FormLayout {
         id: showPercentiles
         text: i18n("Show percentile ranks")
         checked: true
+    }
+
+    Item {
+        Kirigami.FormData.isSection: true
+    }
+
+    QQC2.SpinBox {
+        id: marginWarn
+        Kirigami.FormData.label: i18n("Margin warning threshold (%):")
+        from: 0
+        // darf critical nicht überschreiten
+        to: marginCritical.value
+        value: 30
+    }
+
+    QQC2.SpinBox {
+        id: marginCritical
+        Kirigami.FormData.label: i18n("Margin critical threshold (%):")
+        // darf warning nicht unterschreiten
+        from: marginWarn.value
+        to: 100
+        value: 50
     }
 }

@@ -15,5 +15,18 @@
     <entry name="showTable" type="Bool">
       <default>true</default>
     </entry>
+    <entry name="showPercentiles" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="marginWarnThreshold" type="Int">
+      <default>30</default>
+      <min>0</min>
+      <max>100</max>
+    </entry>
+    <entry name="marginCriticalThreshold" type="Int">
+      <default>50</default>
+      <min>0</min>
+      <max>100</max>
+    </entry>
   </group>
 </kcfg>
