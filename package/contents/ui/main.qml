@@ -273,6 +273,8 @@ PlasmoidItem {
                 refreshIntervalMinutes: root.refreshIntervalMinutes
                 errorMessage: root.errorMessage
                 maxMarginUsage: root.maxMarginUsage
+                marginWarnThreshold: plasmoid.configuration.marginWarnThreshold
+                marginCriticalThreshold: plasmoid.configuration.marginCriticalThreshold
             }
         }
     }

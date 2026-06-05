@@ -12,6 +12,8 @@ RowLayout {
     property int refreshIntervalMinutes: 15
     property string errorMessage: ""
     property real maxMarginUsage: -1
+    property int marginWarnThreshold: 30
+    property int marginCriticalThreshold: 50
 
     spacing: Kirigami.Units.smallSpacing * 2
 
@@ -80,9 +82,9 @@ RowLayout {
             ? i18n("Margin: %1%", statusBar.maxMarginUsage.toFixed(1))
             : i18n("Margin: —")
         color: {
-            if (statusBar.maxMarginUsage < 0)   return Kirigami.Theme.disabledTextColor
-            if (statusBar.maxMarginUsage >= 50) return Kirigami.Theme.negativeTextColor
-            if (statusBar.maxMarginUsage >= 30) return Kirigami.Theme.neutralTextColor
+            if (statusBar.maxMarginUsage < 0)                              return Kirigami.Theme.disabledTextColor
+            if (statusBar.maxMarginUsage >= statusBar.marginCriticalThreshold) return Kirigami.Theme.negativeTextColor
+            if (statusBar.maxMarginUsage >= statusBar.marginWarnThreshold)     return Kirigami.Theme.neutralTextColor
             return Kirigami.Theme.textColor
         }
     }
@@ -100,9 +102,9 @@ RowLayout {
             ? i18n("Cushion: %1%", (100 - statusBar.maxMarginUsage).toFixed(1))
             : i18n("Cushion: —")
         color: {
-            if (statusBar.maxMarginUsage < 0)   return Kirigami.Theme.disabledTextColor
-            if (statusBar.maxMarginUsage >= 50) return Kirigami.Theme.negativeTextColor
-            if (statusBar.maxMarginUsage >= 30) return Kirigami.Theme.neutralTextColor
+            if (statusBar.maxMarginUsage < 0)                              return Kirigami.Theme.disabledTextColor
+            if (statusBar.maxMarginUsage >= statusBar.marginCriticalThreshold) return Kirigami.Theme.negativeTextColor
+            if (statusBar.maxMarginUsage >= statusBar.marginWarnThreshold)     return Kirigami.Theme.neutralTextColor
             return Kirigami.Theme.positiveTextColor
         }
     }
