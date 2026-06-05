@@ -11,6 +11,7 @@ RowLayout {
     property string curveState: "Unknown"
     property int refreshIntervalMinutes: 15
     property string errorMessage: ""
+    property real maxMarginUsage: -1
 
     spacing: Kirigami.Units.smallSpacing * 2
 
@@ -65,5 +66,44 @@ RowLayout {
         font.pointSize: Kirigami.Theme.smallFont.pointSize
         color: Kirigami.Theme.disabledTextColor
         text: i18n("%1 min", statusBar.refreshIntervalMinutes)
+    }
+
+    PlasmaComponents3.Label {
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: Kirigami.Theme.disabledTextColor
+        text: "|"
+    }
+
+    PlasmaComponents3.Label {
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        text: statusBar.maxMarginUsage >= 0
+            ? i18n("Margin: %1%", statusBar.maxMarginUsage.toFixed(1))
+            : i18n("Margin: —")
+        color: {
+            if (statusBar.maxMarginUsage < 0)   return Kirigami.Theme.disabledTextColor
+            if (statusBar.maxMarginUsage >= 50) return Kirigami.Theme.negativeTextColor
+            if (statusBar.maxMarginUsage >= 30) return Kirigami.Theme.neutralTextColor
+            return Kirigami.Theme.textColor
+        }
+    }
+
+    PlasmaComponents3.Label {
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: Kirigami.Theme.disabledTextColor
+        text: "|"
+    }
+
+    // Cushion = ungenutzter Puffer = 100% − Margin-Auslastung
+    PlasmaComponents3.Label {
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        text: statusBar.maxMarginUsage >= 0
+            ? i18n("Cushion: %1%", (100 - statusBar.maxMarginUsage).toFixed(1))
+            : i18n("Cushion: —")
+        color: {
+            if (statusBar.maxMarginUsage < 0)   return Kirigami.Theme.disabledTextColor
+            if (statusBar.maxMarginUsage >= 50) return Kirigami.Theme.negativeTextColor
+            if (statusBar.maxMarginUsage >= 30) return Kirigami.Theme.neutralTextColor
+            return Kirigami.Theme.positiveTextColor
+        }
     }
 }
