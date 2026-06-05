@@ -30,6 +30,12 @@ PlasmoidItem {
         return vix ? vix.value.toFixed(1) : "—"
     }
 
+    // Maximale Margin-Auslastung (%) abhängig vom VIX 30D; -1 = keine Daten
+    readonly property real maxMarginUsage: {
+        var vix = lastSuccessfulPoints.find(function(p) { return p.label === "30D" })
+        return vix ? maxMarginPercent(vix.value) : -1
+    }
+
     // ── Compact representation (panel) ──────────────────────────────────────
     compactRepresentation: Item {
         implicitWidth:  Math.round(Kirigami.Units.gridUnit * 2)
@@ -266,6 +272,7 @@ PlasmoidItem {
                 curveState: root.curveState
                 refreshIntervalMinutes: root.refreshIntervalMinutes
                 errorMessage: root.errorMessage
+                maxMarginUsage: root.maxMarginUsage
             }
         }
     }
@@ -332,6 +339,15 @@ PlasmoidItem {
     // ── Functions ────────────────────────────────────────────────────────────
     function quoteShell(value) {
         return "'" + String(value).replace(/'/g, "'\\''") + "'"
+    }
+
+    // Maximale Margin-Auslastung (%) als Funktion des VIX 30D.
+    function maxMarginPercent(vix) {
+        if (vix < 15) return 25
+        if (vix < 20) return 25 + (vix - 15)        // 25 → 30
+        if (vix < 30) return 30 + (vix - 20) * 0.5  // 30 → 35
+        if (vix < 40) return 35 + (vix - 30) * 0.5  // 35 → 40
+        return 50
     }
 
     function fetchData() {
