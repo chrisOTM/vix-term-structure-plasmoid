@@ -16,6 +16,8 @@ The widget fetches and displays the latest values for five VIX futures maturitie
 
 It plots a line chart of the term structure and classifies the curve as Contango, Backwardation, Flat, or Unknown based on a simple heuristic (see below). This is a visual tool only — **not a trading signal**.
 
+A status bar below the chart also shows a **Margin** and **Cushion** readout derived from the VIX 30D value (see [Margin & Cushion guidance](#margin--cushion-guidance)). These are risk-management guidelines only — **not financial advice**.
+
 <img width="620" height="641" alt="image" src="https://github.com/user-attachments/assets/9ad6a00d-3138-4c3b-947b-013654935f5b" />
 
 
@@ -91,6 +93,8 @@ Open the widget settings to configure:
 | Refresh interval (min)   | 15      | 1–1440 | How often to fetch new data        |
 | Show values on chart     | true    | —      | Display value labels on each point |
 | Show table               | true    | —      | Show the value table below chart   |
+| Margin warning threshold (%)  | 30 | —    | Margin/Cushion turns "warning" at/above this usage |
+| Margin critical threshold (%) | 50 | —    | Margin/Cushion turns "critical" at/above this usage |
 
 ## Curve classification
 
@@ -100,6 +104,20 @@ The curve state is a **heuristic indicator only**, not a trading signal:
 - **Flat** — `|30D − 3M| < 0.5`
 - **Contango** — otherwise (normal upward slope)
 - **Unknown** — insufficient data to classify
+
+## Margin & Cushion guidance
+
+The status bar shows a suggested **maximum margin usage** as a function of the VIX 30D value, plus the resulting **Cushion** (`100% − margin usage`). The idea: the more volatile the regime, the more buffer you keep.
+
+| VIX 30D | Max margin usage |
+|---------|------------------|
+| < 15    | 25%              |
+| 15–20   | 25% → 30% (linear) |
+| 20–30   | 30% → 35% (linear) |
+| 30–40   | 35% → 40% (linear) |
+| ≥ 40    | 50%              |
+
+The readout is colored neutral at/above the **warning** threshold and negative at/above the **critical** threshold (both configurable). This is a personal risk-management heuristic — **not financial advice or a trading signal**.
 
 ## Known limitations
 
