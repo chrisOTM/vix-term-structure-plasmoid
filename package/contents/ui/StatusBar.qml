@@ -17,6 +17,16 @@ RowLayout {
 
     spacing: Kirigami.Units.smallSpacing * 2
 
+    // Format the backend ISO timestamp (e.g. "2026-06-11T15:30:45+02:00")
+    // for display: localized weekday + day + short month + 24h time,
+    // e.g. "Do 11 Jun, 15:30". Falls back to the raw string if unparseable.
+    function formatTimestamp(iso) {
+        var d = new Date(iso)
+        if (isNaN(d.getTime()))
+            return iso
+        return d.toLocaleString(Qt.locale(), "ddd dd MMM, HH:mm")
+    }
+
     PlasmaComponents3.Label {
         id: statusLabel
         font.pointSize: Kirigami.Theme.smallFont.pointSize
@@ -52,7 +62,7 @@ RowLayout {
         font.pointSize: Kirigami.Theme.smallFont.pointSize
         color: Kirigami.Theme.disabledTextColor
         text: statusBar.lastSuccessfulUpdate.length > 0
-            ? i18n("Updated: %1", statusBar.lastSuccessfulUpdate)
+            ? i18n("Updated: %1", statusBar.formatTimestamp(statusBar.lastSuccessfulUpdate))
             : i18n("No data yet")
         elide: Text.ElideRight
         Layout.fillWidth: true
