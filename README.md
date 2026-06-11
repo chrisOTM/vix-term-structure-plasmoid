@@ -18,7 +18,7 @@ It plots a line chart of the term structure and classifies the curve as Contango
 
 A status bar below the chart also shows a **Margin** and **Cushion** readout derived from the VIX 30D value (see [Margin & Cushion guidance](#margin--cushion-guidance)). These are risk-management guidelines only — **not financial advice**.
 
-<img width="620" height="641" alt="image" src="https://github.com/user-attachments/assets/9ad6a00d-3138-4c3b-947b-013654935f5b" />
+<img width="506" alt="VIX Term Structure widget: term-structure chart, value table, and the Margin/Cushion status bar" src="docs/screenshot.png" />
 
 
 ## Requirements
