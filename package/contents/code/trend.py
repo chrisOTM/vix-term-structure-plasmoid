@@ -52,21 +52,34 @@ def compute_trend(series: list, k: int, deadband_pct: float, max_gap_min: float)
 
     last = series[-1]
     ref = series[-1 - k]
+    window = series[-1 - k:]
     try:
         last_ts = datetime.fromisoformat(last["ts"])
         ref_ts = datetime.fromisoformat(ref["ts"])
+        window_ts = [datetime.fromisoformat(p["ts"]) for p in window]
+        ref_val = ref["value"]
+        last_val = last["value"]
     except Exception:
         return (None, None, None)
 
     window_min = (last_ts - ref_ts).total_seconds() / 60.0
-    if window_min > max_gap_min:
+
+    # Staleness is judged by the largest single consecutive gap within the
+    # K-window, not the total span — otherwise the guard collides with a
+    # legitimate lookback window of K normal refresh intervals (see Fix 1).
+    max_single_gap_min = 0.0
+    for prev_ts, next_ts in zip(window_ts, window_ts[1:]):
+        gap_min = (next_ts - prev_ts).total_seconds() / 60.0
+        if gap_min > max_single_gap_min:
+            max_single_gap_min = gap_min
+    if max_single_gap_min > max_gap_min:
         return (None, None, None)
 
-    ref_val = ref["value"]
     if ref_val == 0:
         return (None, None, None)
 
-    pct = (last["value"] - ref_val) / ref_val * 100.0
+    pct = (last_val - ref_val) / ref_val * 100.0
+    # A change exactly at ±deadband_pct classifies as flat (strict > / <).
     if pct > deadband_pct:
         direction = "up"
     elif pct < -deadband_pct:

@@ -63,6 +63,18 @@ def test_trend_zero_reference_returns_none():
     assert trend.compute_trend(series, k=1, deadband_pct=0.5, max_gap_min=45) == (None, None, None)
 
 
+def test_trend_survives_normal_jitter_at_default_k():
+    # Default k=3, refresh_interval_min=15 -> max_gap_min = 45. Each step is
+    # ~15 min plus a few seconds of jitter; total span (~45min+) must NOT
+    # trip the staleness guard since no single gap exceeds 45 min.
+    series = [s("2026-07-08T15:00:00+02:00", 16.0),
+              s("2026-07-08T15:15:07+02:00", 16.5),
+              s("2026-07-08T15:30:11+02:00", 17.0),
+              s("2026-07-08T15:45:19+02:00", 17.5)]
+    d, pct, win = trend.compute_trend(series, k=3, deadband_pct=0.5, max_gap_min=45)
+    assert d == "up"
+
+
 # --- history round-trip ----------------------------------------------------
 
 def test_history_roundtrip_and_trim(tmp_path):
@@ -119,3 +131,19 @@ def test_enrich_never_raises_on_bad_path():
     assert pts[0]["trend"] is None
     assert pts[0]["trend_pct"] is None
     assert pts[0]["trend_window_min"] is None
+
+
+def test_enrich_never_raises_when_compute_trend_blows_up(tmp_path, monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(trend, "compute_trend", boom)
+    path = str(tmp_path / "h.json")
+    pts = [{"ticker": "^VIX", "value": 16.0}, {"ticker": "^VIX3M", "value": 19.0}]
+    trend.enrich_points_with_trend(pts, path, k=1, deadband_pct=0.5,
+                                   refresh_interval_min=15,
+                                   now_ts="2026-07-08T15:00:00+02:00")
+    for point in pts:
+        assert point["trend"] is None
+        assert point["trend_pct"] is None
+        assert point["trend_window_min"] is None
