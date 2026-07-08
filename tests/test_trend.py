@@ -89,3 +89,33 @@ def test_load_corrupt_returns_empty(tmp_path):
     path = tmp_path / "history.json"
     path.write_text("{not json")
     assert trend.load_history(str(path)) == {}
+
+
+# --- enrich_points_with_trend ----------------------------------------------
+
+def test_enrich_warmup_then_up(tmp_path):
+    path = str(tmp_path / "h.json")
+    pts1 = [{"ticker": "^VIX", "label": "30D", "value": 16.0}]
+    trend.enrich_points_with_trend(pts1, path, k=1, deadband_pct=0.5,
+                                   refresh_interval_min=15,
+                                   now_ts="2026-07-08T15:00:00+02:00")
+    assert pts1[0]["trend"] is None  # warm-up, only 1 point stored
+
+    pts2 = [{"ticker": "^VIX", "label": "30D", "value": 17.0}]
+    trend.enrich_points_with_trend(pts2, path, k=1, deadband_pct=0.5,
+                                   refresh_interval_min=15,
+                                   now_ts="2026-07-08T15:15:00+02:00")
+    assert pts2[0]["trend"] == "up"
+    assert pts2[0]["trend_pct"] == 6.25
+    assert pts2[0]["trend_window_min"] == 15
+
+
+def test_enrich_never_raises_on_bad_path():
+    pts = [{"ticker": "^VIX", "value": 16.0}]
+    # Unwritable/invalid directory path must not raise; trend stays None.
+    trend.enrich_points_with_trend(pts, "/proc/nonexistent/h.json", k=1,
+                                   deadband_pct=0.5, refresh_interval_min=15,
+                                   now_ts="2026-07-08T15:00:00+02:00")
+    assert pts[0]["trend"] is None
+    assert pts[0]["trend_pct"] is None
+    assert pts[0]["trend_window_min"] is None

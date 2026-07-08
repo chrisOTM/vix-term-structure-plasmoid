@@ -75,3 +75,32 @@ def compute_trend(series: list, k: int, deadband_pct: float, max_gap_min: float)
         direction = "flat"
 
     return (direction, round(pct, 2), int(round(window_min)))
+
+
+def _set_null_trend(points: list) -> None:
+    for point in points:
+        point["trend"] = None
+        point["trend_pct"] = None
+        point["trend_window_min"] = None
+
+
+def enrich_points_with_trend(points, state_path, k, deadband_pct,
+                             refresh_interval_min, now_ts, cap=32) -> list:
+    if not points:
+        return points
+    try:
+        max_gap_min = refresh_interval_min * 3
+        history = load_history(state_path)
+        append_and_trim(history, points, now_ts, cap)
+        save_history(state_path, history)
+        for point in points:
+            series = history.get(point.get("ticker"), [])
+            direction, pct, window_min = compute_trend(
+                series, k, deadband_pct, max_gap_min)
+            point["trend"] = direction
+            point["trend_pct"] = pct
+            point["trend_window_min"] = window_min
+    except Exception as exc:
+        print(f"trend: enrichment failed: {exc}", file=sys.stderr)
+        _set_null_trend(points)
+    return points

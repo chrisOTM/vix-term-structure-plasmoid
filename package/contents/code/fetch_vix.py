@@ -6,6 +6,8 @@ import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import trend
+
 try:
     import pandas as pd
     import yfinance as yf
@@ -132,6 +134,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--period",   default="1y")
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--timeout",  type=float, default=10)
+    parser.add_argument("--trend-lookback",      type=int,   default=3)
+    parser.add_argument("--trend-deadband-pct",  type=float, default=0.5)
+    parser.add_argument("--refresh-interval-min", type=float, default=15)
+    parser.add_argument("--state-file",          default=trend.default_state_path())
     return parser.parse_args()
 
 
@@ -169,6 +175,16 @@ def main() -> int:
         status = "error"
         if not errors:
             errors.append({"message": "No data returned"})
+
+    if points:
+        trend.enrich_points_with_trend(
+            points,
+            args.state_file,
+            args.trend_lookback,
+            args.trend_deadband_pct,
+            args.refresh_interval_min,
+            now_iso(),
+        )
 
     print(json.dumps(build_result(status, points, errors), ensure_ascii=False))
     return 0
