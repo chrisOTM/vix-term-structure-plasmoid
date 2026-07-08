@@ -169,6 +169,14 @@ PlasmoidItem {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                     }
                     PlasmaComponents3.Label {
+                        text: i18n("Trend")
+                        font.bold: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: Kirigami.Theme.disabledTextColor
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                        visible: plasmoid.configuration.showTrendArrows !== false
+                    }
+                    PlasmaComponents3.Label {
                         text: i18n("Pctl")
                         font.bold: true
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
@@ -211,6 +219,25 @@ PlasmoidItem {
                             text: modelData.value.toFixed(2)
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                        }
+                        PlasmaComponents3.Label {
+                            text: root.trendGlyph(modelData.trend)
+                            color: root.trendColor(modelData.trend)
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 2
+                            horizontalAlignment: Text.AlignHCenter
+                            visible: plasmoid.configuration.showTrendArrows !== false
+                                     && modelData.trend !== undefined && modelData.trend !== null
+
+                            QQC2.ToolTip.visible: hovered.hovered
+                            QQC2.ToolTip.text: modelData.trend_pct !== undefined
+                                && modelData.trend_pct !== null
+                                ? i18n("Trend (last ~%1 min): %2%",
+                                       modelData.trend_window_min,
+                                       modelData.trend_pct.toFixed(2))
+                                : ""
+
+                            HoverHandler { id: hovered }
                         }
                         PlasmaComponents3.Label {
                             text: {
@@ -363,8 +390,23 @@ PlasmoidItem {
         var scriptUrl = Qt.resolvedUrl("../code/fetch_vix.py")
         var script    = scriptUrl.toString().replace(/^file:\/\//, "")
         var command   = quoteShell(script) + " --timeout 10"
+            + " --trend-lookback " + Math.max(1, plasmoid.configuration.trendLookbackRefreshes)
+            + " --refresh-interval-min " + root.refreshIntervalMinutes
         executable.connectSource(command)
         fetchTimeout.start()
+    }
+
+    function trendGlyph(dir) {
+        if (dir === "up")   return "▲"
+        if (dir === "down") return "▼"
+        if (dir === "flat") return "→"
+        return ""
+    }
+
+    function trendColor(dir) {
+        if (dir === "up")   return Kirigami.Theme.negativeTextColor
+        if (dir === "down") return Kirigami.Theme.positiveTextColor
+        return Kirigami.Theme.disabledTextColor
     }
 
     function formatErrors(errors) {
