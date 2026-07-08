@@ -6,11 +6,26 @@ Canvas {
 
     property var points: []
     property bool showValues: true
+    property bool showTrendArrows: true
 
     onPointsChanged: requestPaint()
     onShowValuesChanged: requestPaint()
+    onShowTrendArrowsChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
+
+    function _trendGlyph(dir) {
+        if (dir === "up")   return "▲"
+        if (dir === "down") return "▼"
+        if (dir === "flat") return "→"
+        return ""
+    }
+
+    function _trendColor(dir) {
+        if (dir === "up")   return Kirigami.Theme.negativeTextColor
+        if (dir === "down") return Kirigami.Theme.positiveTextColor
+        return Kirigami.Theme.disabledTextColor
+    }
 
     onPaint: {
         var ctx = getContext("2d")
@@ -131,11 +146,24 @@ Canvas {
             ctx.textBaseline = "top"
             ctx.fillText(points[j].label, px, height - padBottom + Kirigami.Units.smallSpacing)
 
-            // Value near point
+            // Value near point (+ optional trend arrow to its right)
             if (showValues) {
+                var valText = points[j].value.toFixed(1)
+                var valY = py - dotR - Kirigami.Units.smallSpacing
                 ctx.fillStyle = Kirigami.Theme.textColor
+                ctx.textAlign = "center"
                 ctx.textBaseline = "bottom"
-                ctx.fillText(points[j].value.toFixed(1), px, py - dotR - Kirigami.Units.smallSpacing)
+                ctx.fillText(valText, px, valY)
+
+                var tdir = points[j].trend
+                if (showTrendArrows && tdir !== undefined && tdir !== null && tdir !== "") {
+                    var valHalf = ctx.measureText(valText).width / 2
+                    ctx.fillStyle = _trendColor(tdir)
+                    ctx.textAlign = "left"
+                    ctx.fillText(_trendGlyph(tdir),
+                                 px + valHalf + Kirigami.Units.smallSpacing,
+                                 valY)
+                }
             }
         }
     }

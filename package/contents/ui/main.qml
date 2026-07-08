@@ -140,6 +140,7 @@ PlasmoidItem {
                 Layout.fillHeight: true
                 points: root.lastSuccessfulPoints.length > 0 ? root.lastSuccessfulPoints : root.points
                 showValues: plasmoid.configuration.showValuesOnChart
+                showTrendArrows: plasmoid.configuration.showTrendArrows
             }
 
             // Table (optional) — centered below chart
