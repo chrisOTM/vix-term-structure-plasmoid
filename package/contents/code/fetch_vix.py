@@ -76,7 +76,11 @@ def compute_percentile(close: "pd.Series", current_value: float) -> float:
 
 
 def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) -> tuple:
-    """Returns (value, percentile, min_1y, max_1y) for the given ticker."""
+    """Returns (value, percentile, min_1y, max_1y, prev_close) for the ticker.
+
+    ``prev_close`` is the previous trading day's close (or None if the series
+    has only one point); it is the basis for the day-over-day trend.
+    """
     data = yf.download(
         tickers=ticker,
         period=period,
@@ -99,7 +103,13 @@ def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) 
     min_1y = round(float(close.min()), 2)
     max_1y = round(float(close.max()), 2)
 
-    return round(value, 2), percentile, min_1y, max_1y
+    prev_close = None
+    if len(close) >= 2:
+        candidate = float(close.iloc[-2])
+        if math.isfinite(candidate):
+            prev_close = round(candidate, 2)
+
+    return round(value, 2), percentile, min_1y, max_1y, prev_close
 
 
 def classify_curve(points: list) -> str:
@@ -134,10 +144,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--period",   default="1y")
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--timeout",  type=float, default=10)
-    parser.add_argument("--trend-lookback",      type=int,   default=3)
     parser.add_argument("--trend-deadband-pct",  type=float, default=0.5)
-    parser.add_argument("--refresh-interval-min", type=float, default=15)
-    parser.add_argument("--state-file",          default=trend.default_state_path())
     return parser.parse_args()
 
 
@@ -149,7 +156,7 @@ def main() -> int:
     try:
         for item in TICKERS:
             try:
-                value, percentile, min_1y, max_1y = fetch_latest_value(
+                value, percentile, min_1y, max_1y, prev_close = fetch_latest_value(
                     ticker=item["ticker"],
                     period=args.period,
                     interval=args.interval,
@@ -159,7 +166,11 @@ def main() -> int:
                     percentile = None
                     min_1y = None
                     max_1y = None
-                points.append({**item, "value": value, "percentile": percentile, "min_1y": min_1y, "max_1y": max_1y})
+                direction, trend_pct = trend.classify_dod(
+                    value, prev_close, args.trend_deadband_pct)
+                points.append({**item, "value": value, "percentile": percentile,
+                               "min_1y": min_1y, "max_1y": max_1y,
+                               "trend": direction, "trend_pct": trend_pct})
             except Exception as exc:
                 print(f"{item['ticker']}: {exc}", file=sys.stderr)
                 errors.append({"ticker": item["ticker"], "message": str(exc)})
@@ -175,16 +186,6 @@ def main() -> int:
         status = "error"
         if not errors:
             errors.append({"message": "No data returned"})
-
-    if points:
-        trend.enrich_points_with_trend(
-            points,
-            args.state_file,
-            args.trend_lookback,
-            args.trend_deadband_pct,
-            args.refresh_interval_min,
-            now_iso(),
-        )
 
     print(json.dumps(build_result(status, points, errors), ensure_ascii=False))
     return 0

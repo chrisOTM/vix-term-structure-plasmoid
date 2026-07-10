@@ -21,10 +21,6 @@
     <entry name="showTrendArrows" type="Bool">
       <default>true</default>
     </entry>
-    <entry name="trendLookbackRefreshes" type="Int">
-      <default>3</default>
-      <min>1</min>
-    </entry>
     <entry name="marginWarnThreshold" type="Int">
       <default>30</default>
       <min>0</min>

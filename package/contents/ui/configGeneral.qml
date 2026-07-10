@@ -11,7 +11,6 @@ Kirigami.FormLayout {
     property alias cfg_showTable: showTable.checked
     property alias cfg_showPercentiles: showPercentiles.checked
     property alias cfg_showTrendArrows: showTrendArrows.checked
-    property alias cfg_trendLookbackRefreshes: trendLookback.value
     property alias cfg_marginWarnThreshold: marginWarn.value
     property alias cfg_marginCriticalThreshold: marginCritical.value
 
@@ -41,17 +40,8 @@ Kirigami.FormLayout {
 
     QQC2.CheckBox {
         id: showTrendArrows
-        text: i18n("Show trend arrows")
+        text: i18n("Show trend arrows (vs. previous close)")
         checked: true
-    }
-
-    QQC2.SpinBox {
-        id: trendLookback
-        Kirigami.FormData.label: i18n("Trend over N refreshes:")
-        from: 1
-        to: 30
-        value: 3
-        enabled: showTrendArrows.checked
     }
 
     Item {

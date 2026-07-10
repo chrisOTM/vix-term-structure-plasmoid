@@ -233,8 +233,7 @@ PlasmoidItem {
                             QQC2.ToolTip.visible: hovered.hovered
                             QQC2.ToolTip.text: modelData.trend_pct !== undefined
                                 && modelData.trend_pct !== null
-                                ? i18n("Trend (last ~%1 min): %2%",
-                                       modelData.trend_window_min,
+                                ? i18n("Trend vs. previous close: %1%",
                                        modelData.trend_pct.toFixed(2))
                                 : ""
 
@@ -391,8 +390,6 @@ PlasmoidItem {
         var scriptUrl = Qt.resolvedUrl("../code/fetch_vix.py")
         var script    = scriptUrl.toString().replace(/^file:\/\//, "")
         var command   = quoteShell(script) + " --timeout 10"
-            + " --trend-lookback " + Math.max(1, plasmoid.configuration.trendLookbackRefreshes)
-            + " --refresh-interval-min " + root.refreshIntervalMinutes
         executable.connectSource(command)
         fetchTimeout.start()
     }
