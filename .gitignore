@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Tooling / local assistant state
+.claude/
+CLAUDE.md
+graphify-out/
