@@ -227,10 +227,12 @@ PlasmoidItem {
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 2
                             horizontalAlignment: Text.AlignHCenter
+                            // Stays visible even without trend data (empty glyph),
+                            // otherwise the RowLayout collapses this column and
+                            // the remaining cells shift out of alignment.
                             visible: plasmoid.configuration.showTrendArrows !== false
-                                     && modelData.trend !== undefined && modelData.trend !== null
 
-                            QQC2.ToolTip.visible: hovered.hovered
+                            QQC2.ToolTip.visible: hovered.hovered && text !== ""
                             QQC2.ToolTip.text: modelData.trend_pct !== undefined
                                 && modelData.trend_pct !== null
                                 ? i18n("Trend vs. previous close: %1%",
