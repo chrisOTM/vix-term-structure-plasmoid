@@ -9,10 +9,12 @@ import org.kde.plasma.plasma5support as Plasma5Support
 PlasmoidItem {
     id: root
 
-    Plasmoid.title: i18n("VIX Term Structure")
+    Plasmoid.title: i18n("%1 Term Structure", root.marketLabel)
     Plasmoid.icon: "office-chart-line"
     toolTipMainText: Plasmoid.title
-    toolTipSubText: i18n("VIX cash term structure via Yahoo Finance")
+    toolTipSubText: root.dataSource.length > 0
+        ? i18n("%1 cash term structure · %2", root.marketLabel, root.dataSource)
+        : i18n("%1 cash term structure", root.marketLabel)
 
     // State
     property var    points:               []
@@ -21,19 +23,29 @@ PlasmoidItem {
     property string errorMessage:         ""
     property string lastUpdate:           ""
     property string lastSuccessfulUpdate: ""
+    property string dataSource:           ""
     property string curveState:           "Unknown"
     property bool   isRefreshing:         false
     property int    refreshIntervalMinutes: Math.max(1, plasmoid.configuration.refreshIntervalMinutes)
 
+    // "vix" (S&P 500 / Yahoo) or "vstoxx" (EURO STOXX 50 / STOXX)
+    readonly property string market: plasmoid.configuration.market === "vstoxx"
+        ? "vstoxx" : "vix"
+    readonly property string marketLabel: root.market === "vstoxx" ? "VSTOXX" : "VIX"
+    // Headline tenor of the selected curve: VIX 30D, VSTOXX front sub-index.
+    readonly property string frontLabel: root.market === "vstoxx" ? "1M" : "30D"
+
     readonly property string compactLabel: {
-        var vix = lastSuccessfulPoints.find(function(p) { return p.label === "30D" })
-        return vix ? vix.value.toFixed(1) : "—"
+        var front = lastSuccessfulPoints.find(function(p) { return p.label === root.frontLabel })
+        return front ? front.value.toFixed(1) : "—"
     }
 
-    // Maximale Margin-Auslastung (%) abhängig vom VIX 30D; -1 = keine Daten
+    // Maximale Margin-Auslastung (%) abhängig vom Frontpunkt der Kurve; -1 = keine
+    // Daten. Die Schwellen sind auf den VIX kalibriert und bleiben es auch im
+    // VSTOXX-Modus — dort ist die Angabe daher nur eine grobe Orientierung.
     readonly property real maxMarginUsage: {
-        var vix = lastSuccessfulPoints.find(function(p) { return p.label === "30D" })
-        return vix ? maxMarginPercent(vix.value) : -1
+        var front = lastSuccessfulPoints.find(function(p) { return p.label === root.frontLabel })
+        return front ? maxMarginPercent(front.value) : -1
     }
 
     // ── Compact representation (panel) ──────────────────────────────────────
@@ -65,7 +77,7 @@ PlasmoidItem {
 
             PlasmaComponents3.Label {
                 Layout.alignment: Qt.AlignHCenter
-                text: "VIX"
+                text: root.marketLabel
                 font.pointSize: Kirigami.Units.gridUnit * 0.55
                 color: Kirigami.Theme.disabledTextColor
             }
@@ -90,7 +102,7 @@ PlasmoidItem {
                 spacing: Kirigami.Units.smallSpacing
 
                 PlasmaComponents3.Label {
-                    text: i18n("VIX Term Structure")
+                    text: i18n("%1 Term Structure", root.marketLabel)
                     font.bold: true
                     Layout.fillWidth: true
                 }
@@ -298,6 +310,7 @@ PlasmoidItem {
                 Layout.fillWidth: true
                 status: root.status
                 lastSuccessfulUpdate: root.lastSuccessfulUpdate
+                dataSource: root.dataSource
                 curveState: root.curveState
                 refreshIntervalMinutes: root.refreshIntervalMinutes
                 errorMessage: root.errorMessage
@@ -352,6 +365,20 @@ PlasmoidItem {
             refreshTimer.interval = root.refreshIntervalMinutes * 60 * 1000
             refreshTimer.restart()
         }
+
+        function onMarketChanged() {
+            // Drop the old market's data: otherwise its values would linger
+            // under the new market's tenor labels until the fetch returns.
+            root.points               = []
+            root.lastSuccessfulPoints = []
+            root.lastSuccessfulUpdate = ""
+            root.dataSource           = ""
+            root.curveState           = "Unknown"
+            root.errorMessage         = ""
+            root.isRefreshing         = false
+            root.fetchData()
+            refreshTimer.restart()
+        }
     }
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
@@ -391,7 +418,7 @@ PlasmoidItem {
 
         var scriptUrl = Qt.resolvedUrl("../code/fetch_vix.py")
         var script    = scriptUrl.toString().replace(/^file:\/\//, "")
-        var command   = quoteShell(script) + " --timeout 10"
+        var command   = quoteShell(script) + " --timeout 10 --market " + quoteShell(root.market)
         executable.connectSource(command)
         fetchTimeout.start()
     }
@@ -431,10 +458,16 @@ PlasmoidItem {
         try {
             var result = JSON.parse(stdout)
 
+            // A fetch started before a market switch may still be in flight;
+            // its data belongs to the old curve, so drop it.
+            if (result.market && result.market !== root.market)
+                return
+
             if (result.status === "ok" || result.status === "partial") {
                 root.points     = result.points       || []
                 root.curveState = result.curve_state  || "Unknown"
                 root.lastUpdate = result.timestamp    || ""
+                root.dataSource = result.source       || ""
 
                 if (root.points.length > 0) {
                     root.lastSuccessfulPoints = root.points

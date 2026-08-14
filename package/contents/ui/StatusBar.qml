@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents3
 
@@ -8,6 +9,8 @@ RowLayout {
 
     property string status: "loading"
     property string lastSuccessfulUpdate: ""
+    // Data source incl. the vendor's data date, e.g. "STOXX (delayed) · 2026-08-14"
+    property string dataSource: ""
     property string curveState: "Unknown"
     property int refreshIntervalMinutes: 15
     property string errorMessage: ""
@@ -66,6 +69,13 @@ RowLayout {
             : i18n("No data yet")
         elide: Text.ElideRight
         Layout.fillWidth: true
+
+        // The fetch time is not the data time: VSTOXX is a delayed feed, so
+        // the source line carries the vendor's own data date.
+        QQC2.ToolTip.visible: sourceHover.hovered && statusBar.dataSource.length > 0
+        QQC2.ToolTip.text: i18n("Source: %1", statusBar.dataSource)
+
+        HoverHandler { id: sourceHover }
     }
 
     PlasmaComponents3.Label {

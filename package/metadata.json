@@ -2,8 +2,8 @@
   "KPlugin": {
     "Id": "com.chrisotm.vixtermstructure",
     "Name": "VIX Term Structure",
-    "Description": "Shows the VIX cash term structure using Yahoo Finance data via yfinance.",
-    "Version": "0.2.0",
+    "Description": "Shows the VIX (S&P 500) or VSTOXX (EURO STOXX 50) cash term structure, switchable in the settings.",
+    "Version": "0.3.0",
     "Icon": "office-chart-line",
     "Authors": [
       {

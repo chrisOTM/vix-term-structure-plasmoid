@@ -6,6 +6,7 @@ import org.kde.kirigami as Kirigami
 Kirigami.FormLayout {
     id: page
 
+    property string cfg_market: "vix"
     property alias cfg_refreshIntervalMinutes: refreshInterval.value
     property alias cfg_showValuesOnChart: showValues.checked
     property alias cfg_showTable: showTable.checked
@@ -13,6 +14,28 @@ Kirigami.FormLayout {
     property alias cfg_showTrendArrows: showTrendArrows.checked
     property alias cfg_marginWarnThreshold: marginWarn.value
     property alias cfg_marginCriticalThreshold: marginCritical.value
+
+    QQC2.ComboBox {
+        id: marketCombo
+        Kirigami.FormData.label: i18n("Market:")
+        textRole: "text"
+        valueRole: "value"
+        model: [
+            { value: "vix",    text: i18n("VIX — S&P 500 (Yahoo Finance)") },
+            { value: "vstoxx", text: i18n("VSTOXX — EURO STOXX 50 (STOXX, delayed)") }
+        ]
+
+        Component.onCompleted: currentIndex = Math.max(0, indexOfValue(page.cfg_market))
+        onActivated: page.cfg_market = currentValue
+
+        // The config loader may assign cfg_market after this page is built.
+        Connections {
+            target: page
+            function onCfg_marketChanged() {
+                marketCombo.currentIndex = Math.max(0, marketCombo.indexOfValue(page.cfg_market))
+            }
+        }
+    }
 
     QQC2.SpinBox {
         id: refreshInterval

@@ -1,10 +1,12 @@
 # VIX Term Structure Plasmoid
 
-A KDE Plasma 6 widget that displays the VIX cash term structure curve directly on your desktop, updated periodically from Yahoo Finance.
+A KDE Plasma 6 widget that displays a volatility cash term structure curve directly on your desktop. Two markets, switchable in the settings: **VIX** (S&P 500, via Yahoo Finance) and **VSTOXX** (EURO STOXX 50, via STOXX).
 
 ## What it shows
 
-The widget fetches and displays the latest values for five VIX futures maturities:
+Five maturities of the selected market.
+
+**VIX** (`Market: VIX`, default) — CBOE volatility indices via Yahoo Finance:
 
 | Ticker   | Label | Maturity  |
 |----------|-------|-----------|
@@ -13,6 +15,16 @@ The widget fetches and displays the latest values for five VIX futures maturitie
 | `^VIX3M` | 3M    | 3 months  |
 | `^VIX6M` | 6M    | 6 months  |
 | `^VIX1Y` | 1Y    | 1 year    |
+
+**VSTOXX** (`Market: VSTOXX`) — EURO STOXX 50 volatility sub-indices via STOXX:
+
+| Index | ISIN           | Label | Maturity  |
+|-------|----------------|-------|-----------|
+| V6I1  | DE000A0G87B2   | 1M    | 1 month   |
+| V6I2  | DE000A0G87C0   | 2M    | 2 months  |
+| V6I3  | DE000A0G87D8   | 3M    | 3 months  |
+| V6I4  | DE000A0G87E6   | 6M    | 6 months  |
+| V6I6  | DE000A0G87G1   | 12M   | 12 months |
 
 It plots a line chart of the term structure and classifies the curve as Contango, Backwardation, Flat, or Unknown based on a simple heuristic (see below). This is a visual tool only — **not a trading signal**.
 
@@ -25,7 +37,7 @@ A status bar below the chart also shows a **Margin** and **Cushion** readout der
 
 - KDE Plasma 6
 - Python 3.9+
-- `yfinance` and `pandas` Python packages
+- `yfinance` and `pandas` Python packages — **only for the VIX market**. The VSTOXX market uses the standard library alone, so it keeps working without them.
 
 ## Installation
 
@@ -90,6 +102,7 @@ Open the widget settings to configure:
 
 | Setting                  | Default | Range  | Description                        |
 |--------------------------|---------|--------|------------------------------------|
+| Market                   | VIX     | VIX, VSTOXX | Which volatility curve to show |
 | Refresh interval (min)   | 15      | 1–1440 | How often to fetch new data        |
 | Show values on chart     | true    | —      | Display value labels on each point |
 | Show table               | true    | —      | Show the value table below chart   |
@@ -98,10 +111,10 @@ Open the widget settings to configure:
 
 ## Curve classification
 
-The curve state is a **heuristic indicator only**, not a trading signal:
+The curve state is a **heuristic indicator only**, not a trading signal. It uses the three front tenors of the selected market — `9D / 30D / 3M` for VIX, `1M / 2M / 3M` for VSTOXX:
 
-- **Backwardation** — `9D > 30D` or `30D > 3M` (short-term stress)
-- **Flat** — `|30D − 3M| < 0.5`
+- **Backwardation** — `near > mid` or `mid > far` (short-term stress)
+- **Flat** — `|mid − far| < 0.5`
 - **Contango** — otherwise (normal upward slope)
 - **Unknown** — insufficient data to classify
 
@@ -119,20 +132,30 @@ The status bar shows a suggested **maximum margin usage** as a function of the V
 
 The readout is colored neutral at/above the **warning** threshold and negative at/above the **critical** threshold (both configurable). This is a personal risk-management heuristic — **not financial advice or a trading signal**.
 
+In VSTOXX mode the same table is applied to the VSTOXX 1M value. The thresholds remain **calibrated on the VIX** and are deliberately not rescaled, so treat the readout there as a rough orientation only.
+
 ## Known limitations
 
 - Data is only available during market hours and recent sessions. Values shown are the most recent available close.
 - The widget will show the last known values when a refresh fails, with an error indicator.
-- If `yfinance` or Python is not installed, the widget shows an error message.
+- If `yfinance` or Python is not installed, the VIX market shows an error message. VSTOXX is unaffected.
 - Refresh timer pauses when the widget is not visible, resuming with an immediate refresh when it becomes visible again.
+- **VSTOXX is a delayed feed.** The "Updated" time is the fetch time, not the data time — hover it to see the vendor's own data date.
+- **VSTOXX sub-indices are fixed-expiry, not constant-maturity.** Each one tracks a specific EURO STOXX 50 option expiry, so its remaining life shrinks day by day and the front point drops away shortly before it rolls. The VIX cash indices are constant-maturity and do not behave this way. Read the front of the EU curve with that in mind.
 
 ## Data disclaimer
 
-> Data is provided through `yfinance` and Yahoo Finance public endpoints.
+> **VIX** data is provided through `yfinance` and Yahoo Finance public endpoints.
 > `yfinance` is not affiliated with, endorsed by, or vetted by Yahoo.
-> This tool is for **informational and educational use only**.
 > Refer to Yahoo Finance Terms of Service before any production or commercial use.
 > VIX data is published by CBOE; this widget fetches it indirectly via Yahoo Finance.
+>
+> **VSTOXX** data comes from STOXX Ltd. public index endpoints (`quotes.stoxx.com`,
+> with the public index pages as a fallback), using the API key those pages ship
+> in their own HTML. VSTOXX® is a registered trademark of STOXX Ltd.
+> Refer to the STOXX terms of use before any production or commercial use.
+>
+> This tool is for **informational and educational use only**.
 
 ## Technical risk: Plasma5Support
 
