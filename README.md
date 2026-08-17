@@ -28,9 +28,18 @@ Five maturities of the selected market.
 
 It plots a line chart of the term structure and classifies the curve as Contango, Backwardation, Flat, or Unknown based on a simple heuristic (see below). This is a visual tool only — **not a trading signal**.
 
+Every point also carries two context readouts, both optional in the settings:
+
+- a **1-year percentile rank** with the trailing 1Y min/max (see [Percentile ranks](#percentile-ranks)),
+- a **day-over-day trend arrow** against the previous close (see [Trend indicator](#trend-indicator)).
+
+The optional table below the chart has the columns `Label | Value | Trend | Pctl | Min | Max`.
+
 A status bar below the chart also shows a **Margin** and **Cushion** readout derived from the VIX 30D value (see [Margin & Cushion guidance](#margin--cushion-guidance)). These are risk-management guidelines only — **not financial advice**.
 
-<img width="506" alt="VIX Term Structure widget: term-structure chart, value table, and the Margin/Cushion status bar" src="docs/screenshot.png" />
+<img width="506" alt="VIX Term Structure widget: term-structure chart, value table with percentile ranks and 1Y min/max, and the Margin/Cushion status bar" src="docs/screenshot.png" />
+
+<sub>The screenshot predates the trend arrows, so it does not show the `Trend` column.</sub>
 
 
 ## Requirements
@@ -106,6 +115,8 @@ Open the widget settings to configure:
 | Refresh interval (min)   | 15      | 1–1440 | How often to fetch new data        |
 | Show values on chart     | true    | —      | Display value labels on each point |
 | Show table               | true    | —      | Show the value table below chart   |
+| Show percentile ranks    | true    | —      | Show the `Pctl` column in the table |
+| Show trend arrows        | true    | —      | Show the `Trend` column and the arrows on the chart |
 | Margin warning threshold (%)  | 30 | —    | Margin/Cushion turns "warning" at/above this usage |
 | Margin critical threshold (%) | 50 | —    | Margin/Cushion turns "critical" at/above this usage |
 
@@ -117,6 +128,32 @@ The curve state is a **heuristic indicator only**, not a trading signal. It uses
 - **Flat** — `|mid − far| < 0.5`
 - **Contango** — otherwise (normal upward slope)
 - **Unknown** — insufficient data to classify
+
+## Percentile ranks
+
+Each maturity is ranked against its own trailing **1 year of daily closes**: the percentile is the share of those closes at or below the current value. The table shows it in the `Pctl` column, next to the 1Y `Min` and `Max`. A low rank means the tenor sits near the bottom of its own past year, a high rank near the top.
+
+The rank drives the color of both the table entry and the chart dot:
+
+| Percentile | Color    | Chart dot                   |
+|------------|----------|-----------------------------|
+| ≤ 10 or ≥ 90 | negative | plus a translucent glow ring |
+| ≤ 25 or ≥ 75 | neutral  | —                           |
+| otherwise    | normal   | —                           |
+
+Points without enough history show `—`. For VIX the `1Y` tenor has no percentile of its own (`n/a`); its `Min`/`Max` cells repeat the current value.
+
+## Trend indicator
+
+Every point is compared against its **previous daily close** — day-over-day, not intraday — so the arrow stays meaningful outside US market hours, when the VIX cash indices do not move. Changes within a fixed **0.5% deadband** count as flat (`--trend-deadband-pct` in `fetch_vix.py`).
+
+| Direction | Glyph | Color    |
+|-----------|-------|----------|
+| up        | ▲     | negative (rising vol = rising risk) |
+| down      | ▼     | positive |
+| flat      | →     | muted    |
+
+Arrows appear in the `Trend` column and next to the value labels on the chart; hover the column entry for the exact percentage change. With no previous close available (single data point) the cell stays empty.
 
 ## Margin & Cushion guidance
 
@@ -161,7 +198,7 @@ In VSTOXX mode the same table is applied to the VSTOXX 1M value. The thresholds 
 
 This plasmoid uses `org.kde.plasma.plasma5support` (`Plasma5Support.DataSource` with the `executable` engine) to run the local Python fetcher script from QML. This is a Plasma 6 **compatibility module** and may need replacement in a future Plasma version. If the widget stops working after a Plasma upgrade, check whether `Plasma5Support` is still available.
 
-A future version (v0.2+) should replace this with a local D-Bus helper or native extension for long-term stability.
+A future version should replace this with a local D-Bus helper or native extension for long-term stability.
 
 ## License
 
