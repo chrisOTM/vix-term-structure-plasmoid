@@ -37,9 +37,7 @@ The optional table below the chart has the columns `Label | Value | Trend | Pctl
 
 A status bar below the chart also shows a **Margin** and **Cushion** readout derived from the VIX 30D value (see [Margin & Cushion guidance](#margin--cushion-guidance)). These are risk-management guidelines only — **not financial advice**.
 
-<img width="506" alt="VIX Term Structure widget: term-structure chart, value table with percentile ranks and 1Y min/max, and the Margin/Cushion status bar" src="docs/screenshot.png" />
-
-<sub>The screenshot predates the trend arrows, so it does not show the `Trend` column.</sub>
+<img width="515" alt="VIX Term Structure widget: term-structure chart with trend arrows, value table with trend, percentile ranks and 1Y min/max, and the Margin/Cushion status bar" src="docs/screenshot.png" />
 
 
 ## Requirements
