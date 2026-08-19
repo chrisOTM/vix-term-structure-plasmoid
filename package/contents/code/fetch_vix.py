@@ -3,25 +3,38 @@
 
 Two markets, two data sources:
 
-* ``vix``    — VIX cash indices from Yahoo Finance (needs pandas + yfinance).
+* ``vix``    — VIX cash indices from Yahoo Finance (stdlib, see ``yahoo.py``;
+  yfinance is only a fallback when plain HTTP requests are blocked).
 * ``vstoxx`` — VSTOXX sub-indices from STOXX (stdlib only, see ``stoxx.py``).
 
-The Yahoo dependencies are imported lazily so the VSTOXX mode keeps working on
-a machine without pandas or yfinance.
+The pandas/yfinance imports stay lazy so both markets keep working on a machine
+without them.
 """
 
 import argparse
 import json
 import math
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import stoxx
 import trend
+import yahoo
 
 pd = None
 yf = None
+
+# Yahoo truncates the history of the thinner indices at random (see
+# ``yahoo.py``); the tickers are fetched in parallel so retrying stays inside
+# the plasmoid's fetch timeout.
+MIN_HISTORY_BARS = yahoo.MIN_HISTORY_BARS
+HISTORY_RETRIES = yahoo.RETRIES
+
+# ^VIX1Y is quoted but not backfilled at Yahoo: even range=max returns one bar.
+NO_HISTORY_LABELS = {"1Y"}
 
 VIX_TICKERS = [
     {"ticker": "^VIX9D", "label": "9D",  "name": "VIX 9-Day",    "days": 9},
@@ -33,7 +46,7 @@ VIX_TICKERS = [
 
 MARKETS = {
     "vix": {
-        "source": "Yahoo Finance via yfinance",
+        "source": "Yahoo Finance",
         # 9D > 30D or 30D > 3M means the front end is bid: backwardation.
         "curve_labels": ("9D", "30D", "3M"),
     },
@@ -97,23 +110,48 @@ def compute_percentile(close: "pd.Series", current_value: float) -> float:
     return round(count / total * 100, 1)
 
 
-def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) -> tuple:
-    """Returns (value, percentile, min_1y, max_1y, prev_close) for the ticker.
+def download_close(ticker: str, period: str, interval: str, timeout: float,
+                   retries: int = HISTORY_RETRIES,
+                   min_bars: int = MIN_HISTORY_BARS) -> "pd.Series":
+    """Download daily closes, retrying while Yahoo returns a truncated series.
 
-    ``prev_close`` is the previous trading day's close (or None if the series
-    has only one point); it is the basis for the day-over-day trend.
+    Keeps the longest series any attempt produced, so a run that never sees the
+    full year still reports today's value instead of failing outright.
     """
-    data = yf.download(
-        tickers=ticker,
-        period=period,
-        interval=interval,
-        progress=False,
-        auto_adjust=False,
-        threads=False,
-        timeout=timeout,
-    )
+    close = None
+    last_error = None
 
-    close = close_series(data, ticker)
+    for attempt in range(max(1, retries)):
+        if attempt:
+            time.sleep(yahoo.RETRY_DELAY_S)
+        try:
+            data = yf.download(
+                tickers=ticker,
+                period=period,
+                interval=interval,
+                progress=False,
+                auto_adjust=False,
+                threads=False,
+                timeout=timeout,
+            )
+            candidate = close_series(data, ticker)
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        if close is None or len(candidate) > len(close):
+            close = candidate
+        if len(close) >= min_bars:
+            break
+
+    if close is None:
+        raise last_error if last_error else ValueError("No data returned")
+
+    return close
+
+
+def summarize_close_series(close: "pd.Series", min_bars: int) -> dict:
+    """Same summary shape as ``yahoo.summarize``, from a pandas close series."""
     value = float(close.iloc[-1])
 
     if not math.isfinite(value):
@@ -121,17 +159,55 @@ def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float) 
     if value <= 0:
         raise ValueError("Invalid non-positive value")
 
-    percentile = compute_percentile(close, value)
-    min_1y = round(float(close.min()), 2)
-    max_1y = round(float(close.max()), 2)
+    bars = int(close.count())
+    if bars >= min_bars:
+        percentile = compute_percentile(close, value)
+        min_1y = round(float(close.min()), 2)
+        max_1y = round(float(close.max()), 2)
+    else:
+        percentile = min_1y = max_1y = None
 
     prev_close = None
-    if len(close) >= 2:
+    if bars >= 2:
         candidate = float(close.iloc[-2])
         if math.isfinite(candidate):
             prev_close = round(candidate, 2)
 
-    return round(value, 2), percentile, min_1y, max_1y, prev_close
+    return {"value": round(value, 2), "percentile": percentile,
+            "min_1y": min_1y, "max_1y": max_1y, "prev_close": prev_close,
+            "bars": bars}
+
+
+def fetch_via_yfinance(ticker: str, period: str, interval: str, timeout: float,
+                       retries: int, min_bars: int) -> dict:
+    """Fallback path: same data through pandas + yfinance."""
+    require_yahoo()
+    close = download_close(ticker, period, interval, timeout, retries, min_bars)
+    return summarize_close_series(close, min_bars)
+
+
+def fetch_latest_value(ticker: str, period: str, interval: str, timeout: float,
+                       retries: int = HISTORY_RETRIES,
+                       min_bars: int = MIN_HISTORY_BARS) -> dict:
+    """Latest close plus its 1y statistics.
+
+    Chart API first; yfinance only if that transport fails outright, so a
+    machine without pandas still gets the curve.
+
+    ``percentile``/``min_1y``/``max_1y`` are None when fewer than ``min_bars``
+    closes came back — a one-bar series would otherwise report a 100th
+    percentile and a range collapsed onto today's value. ``prev_close`` is the
+    previous trading day's close (None on a single-bar series); it is the basis
+    for the day-over-day trend.
+    """
+    try:
+        return yahoo.fetch_ticker(ticker, timeout=timeout, retries=retries,
+                                  min_bars=min_bars)
+    except Exception as exc:
+        print(f"{ticker}: chart API failed ({exc}); trying yfinance",
+              file=sys.stderr)
+        return fetch_via_yfinance(ticker, period, interval, timeout, retries,
+                                  min_bars)
 
 
 def classify_curve(points: list, curve_labels: tuple) -> str:
@@ -177,32 +253,49 @@ def build_point(item: dict, value, percentile, min_1y, max_1y, prev_close,
             "trend": direction, "trend_pct": trend_pct}
 
 
-def fetch_vix_points(args, points: list, errors: list) -> None:
+def fetch_vix_point(item: dict, args) -> tuple:
+    """Fetch one ticker; returns (point, error) with either side possibly None."""
+    no_history = item["label"] in NO_HISTORY_LABELS
     try:
-        require_yahoo()
-    except RuntimeError as exc:
-        print(str(exc), file=sys.stderr)
-        errors.append({"message": str(exc)})
-        return
+        result = fetch_latest_value(
+            ticker=item["ticker"],
+            period=args.period,
+            interval=args.interval,
+            timeout=args.timeout,
+            retries=1 if no_history else args.retries,
+            min_bars=args.min_history_bars,
+        )
+    except Exception as exc:
+        print(f"{item['ticker']}: {exc}", file=sys.stderr)
+        return None, {"ticker": item["ticker"], "message": str(exc)}
 
-    for item in VIX_TICKERS:
-        try:
-            value, percentile, min_1y, max_1y, prev_close = fetch_latest_value(
-                ticker=item["ticker"],
-                period=args.period,
-                interval=args.interval,
-                timeout=args.timeout,
-            )
-            # ^VIX1Y has less than a year of history: no meaningful 1y stats.
-            if item["label"] == "1Y":
-                percentile = None
-                min_1y = None
-                max_1y = None
-            points.append(build_point(item, value, percentile, min_1y, max_1y,
-                                      prev_close, args.trend_deadband_pct))
-        except Exception as exc:
-            print(f"{item['ticker']}: {exc}", file=sys.stderr)
-            errors.append({"ticker": item["ticker"], "message": str(exc)})
+    error = None
+    if no_history:
+        result["percentile"] = None
+        result["min_1y"] = None
+        result["max_1y"] = None
+    elif result["percentile"] is None:
+        message = (f"Only {result['bars']} daily close(s) returned; "
+                   "1y stats unavailable")
+        print(f"{item['ticker']}: {message}", file=sys.stderr)
+        error = {"ticker": item["ticker"], "message": message}
+
+    point = build_point(item, result["value"], result["percentile"],
+                        result["min_1y"], result["max_1y"],
+                        result["prev_close"], args.trend_deadband_pct)
+    return point, error
+
+
+def fetch_vix_points(args, points: list, errors: list) -> None:
+    with ThreadPoolExecutor(max_workers=len(VIX_TICKERS)) as pool:
+        results = list(pool.map(lambda item: fetch_vix_point(item, args),
+                                VIX_TICKERS))
+
+    for point, error in results:
+        if point is not None:
+            points.append(point)
+        if error is not None:
+            errors.append(error)
 
 
 def fetch_vstoxx_points(args, points: list, errors: list) -> str:
@@ -235,6 +328,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--timeout",  type=float, default=10)
     parser.add_argument("--trend-deadband-pct",  type=float, default=0.5)
+    parser.add_argument("--retries", type=int, default=HISTORY_RETRIES,
+                        help="attempts per ticker when Yahoo truncates history")
+    parser.add_argument("--min-history-bars", type=int, default=MIN_HISTORY_BARS,
+                        help="daily closes required before 1y stats are trusted")
     return parser.parse_args()
 
 

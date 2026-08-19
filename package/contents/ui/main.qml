@@ -353,7 +353,7 @@ PlasmoidItem {
         onTriggered: {
             root.isRefreshing = false
             root.status = "error"
-            root.errorMessage = i18n("Fetcher did not respond within 30s. Check that python3 and yfinance are installed.")
+            root.errorMessage = i18n("Fetcher did not respond within 30s. Check that python3 is installed and the data source is reachable.")
         }
     }
 

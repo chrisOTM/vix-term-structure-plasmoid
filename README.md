@@ -44,25 +44,19 @@ A status bar below the chart also shows a **Margin** and **Cushion** readout der
 
 - KDE Plasma 6
 - Python 3.9+
-- `yfinance` and `pandas` Python packages — **only for the VIX market**. The VSTOXX market uses the standard library alone, so it keeps working without them.
+- No Python packages. Both markets fetch with the standard library.
+- Optional: `yfinance` and `pandas`. They are used only as a fallback for the VIX market, if plain HTTP requests to Yahoo are blocked on your machine.
 
 ## Installation
 
-### 1. Install Python dependencies
+### 1. Optional: install the VIX fallback dependencies
 
-System packages (recommended):
+Only needed if the VIX market reports that Yahoo's chart endpoint is unreachable:
 ```bash
 pip install --user yfinance pandas
 ```
 
-Or in a virtual environment:
-```bash
-python3 -m venv ~/.local/share/vix-term-structure-plasmoid/venv
-source ~/.local/share/vix-term-structure-plasmoid/venv/bin/activate
-pip install yfinance pandas
-```
-
-If using a venv, edit `package/contents/code/fetch_vix.py` to use the venv Python, or create a wrapper script.
+If you install them into a virtual environment, edit `package/contents/code/fetch_vix.py` to use the venv Python, or create a wrapper script.
 
 ### 2. Install the plasmoid
 
@@ -173,15 +167,18 @@ In VSTOXX mode the same table is applied to the VSTOXX 1M value. The thresholds 
 
 - Data is only available during market hours and recent sessions. Values shown are the most recent available close.
 - The widget will show the last known values when a refresh fails, with an error indicator.
-- If `yfinance` or Python is not installed, the VIX market shows an error message. VSTOXX is unaffected.
+- If Python is not installed, both markets show an error message.
+- Yahoo sometimes answers with a one-bar history for the thinner indices (`^VIX9D`, `^VIX3M`). The fetcher retries such answers on new connections; if every attempt is truncated, that row keeps its current value but shows no percentile, 1Y range or trend, and the widget reports partial data.
+- `^VIX1Y` has no history at Yahoo at all, so its row never shows a percentile or 1Y range.
 - Refresh timer pauses when the widget is not visible, resuming with an immediate refresh when it becomes visible again.
 - **VSTOXX is a delayed feed.** The "Updated" time is the fetch time, not the data time — hover it to see the vendor's own data date.
 - **VSTOXX sub-indices are fixed-expiry, not constant-maturity.** Each one tracks a specific EURO STOXX 50 option expiry, so its remaining life shrinks day by day and the front point drops away shortly before it rolls. The VIX cash indices are constant-maturity and do not behave this way. Read the front of the EU curve with that in mind.
 
 ## Data disclaimer
 
-> **VIX** data is provided through `yfinance` and Yahoo Finance public endpoints.
-> `yfinance` is not affiliated with, endorsed by, or vetted by Yahoo.
+> **VIX** data comes from Yahoo Finance public chart endpoints (`query1`/`query2`),
+> with `yfinance` as an optional fallback transport. `yfinance` is not affiliated
+> with, endorsed by, or vetted by Yahoo.
 > Refer to Yahoo Finance Terms of Service before any production or commercial use.
 > VIX data is published by CBOE; this widget fetches it indirectly via Yahoo Finance.
 >
