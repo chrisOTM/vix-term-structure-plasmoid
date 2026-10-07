@@ -6,3 +6,6 @@ __pycache__/
 .claude/
 CLAUDE.md
 graphify-out/
+# Local agent tooling (graphify hooks, Codex/Claude scaffolding, caches)
+.codex/
+AGENTS.md

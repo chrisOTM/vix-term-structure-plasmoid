@@ -102,9 +102,39 @@ PlasmoidItem {
                 spacing: Kirigami.Units.smallSpacing
 
                 PlasmaComponents3.Label {
-                    text: i18n("%1 Term Structure", root.marketLabel)
+                    text: i18n("Term Structure")
                     font.bold: true
                     Layout.fillWidth: true
+                }
+
+                // Compact VIX/VSTOXX switch. Reads and writes the same config
+                // key the settings page uses, so both stay in sync; the
+                // actual refresh-on-switch logic lives in the
+                // onMarketChanged handler below.
+                RowLayout {
+                    id: marketSwitch
+                    spacing: 0
+
+                    PlasmaComponents3.ToolButton {
+                        text: i18n("VIX")
+                        checkable: true
+                        checked: root.market === "vix"
+                        autoExclusive: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        onClicked: plasmoid.configuration.market = "vix"
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.text: i18n("S&P 500 VIX term structure (Yahoo Finance)")
+                    }
+                    PlasmaComponents3.ToolButton {
+                        text: i18n("VSTOXX")
+                        checkable: true
+                        checked: root.market === "vstoxx"
+                        autoExclusive: true
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        onClicked: plasmoid.configuration.market = "vstoxx"
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.text: i18n("EURO STOXX 50 VSTOXX term structure (STOXX, delayed)")
+                    }
                 }
 
                 PlasmaComponents3.Label {

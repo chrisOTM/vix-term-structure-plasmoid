@@ -99,11 +99,16 @@ kpackagetool6 --type Plasma/Applet --remove com.chrisotm.vixtermstructure
 
 ## Configuration
 
+A **VIX | VSTOXX** switch sits in the popup header itself, next to the title, so
+the market can be changed without opening the settings. Switching refreshes
+the data immediately and is saved back to the same `Market` setting below, so
+either place always reflects the current choice.
+
 Open the widget settings to configure:
 
 | Setting                  | Default | Range  | Description                        |
 |--------------------------|---------|--------|------------------------------------|
-| Market                   | VIX     | VIX, VSTOXX | Which volatility curve to show |
+| Market                   | VIX     | VIX, VSTOXX | Which volatility curve to show (also switchable from the popup header) |
 | Refresh interval (min)   | 15      | 1–1440 | How often to fetch new data        |
 | Show values on chart     | true    | —      | Display value labels on each point |
 | Show table               | true    | —      | Show the value table below chart   |
